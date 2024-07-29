@@ -119,6 +119,18 @@ namespace Mon.Behaviur
                 Debug.Log($"No se creo {filenName}", MessageType.warning);
             }
         }
+
+        public static async Task<IReadOnlyList<GitHubCommit>?> GetAllComits()
+        {
+            try
+            {
+                return await client.Repository.Commit.GetAll(currentRepository.Id);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
     }
 
     public static class Git
@@ -133,8 +145,7 @@ namespace Mon.Behaviur
 
         static Git()
         {
-            //Configuracion de las opciones de Pull/Push
-
+            //Configuracion de las opciones de Push
             pushOptions = new PushOptions
             {
                 CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
@@ -144,6 +155,7 @@ namespace Mon.Behaviur
                 }
             };
 
+            //Configuracion de las opciones de Pull
             pullOptions.MergeOptions = new MergeOptions();
             pullOptions.MergeOptions.FailOnConflict = true;
             pullOptions.FetchOptions = new FetchOptions();

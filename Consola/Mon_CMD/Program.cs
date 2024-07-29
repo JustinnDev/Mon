@@ -9,26 +9,33 @@ namespace Mon
         static async Task Main(string[] args)
         {
             await Github.Start();
-          
-            while (true)
-            {
-                await Behaviur();
-                await Task.Delay(TimeSpan.FromSeconds(5));
-            }
+            //await Behaviur();
+
+            var commits = await Github.GetAllComits();
+
+            await Console.Out.WriteLineAsync(commits.Count.ToString());
+
+            foreach (var commit in commits)
+                await Console.Out.WriteLineAsync(commit.Sha);
         }
 
         static async Task Behaviur()
         {
-            Github.UpdateRepositories();
-
-            if (await Github.GetFileOnRepository(Definitions.gitignore) == null)
+            while (true)
             {
-                await Github.CreateFileOnRepository(Definitions.gitignore, Contents.GitIgnore);
-            }
+                Github.UpdateRepositories();
 
-            Git.PullRemoteChanges();
-            Git.PushLocalChanges();
-            await Console.Out.WriteLineAsync();
+                if (await Github.GetFileOnRepository(Definitions.gitignore) == null)
+                {
+                    await Github.CreateFileOnRepository(Definitions.gitignore, Contents.GitIgnore);
+                }
+
+                Git.PullRemoteChanges();
+                Git.PushLocalChanges();
+                await Console.Out.WriteLineAsync();
+
+                await Task.Delay(TimeSpan.FromSeconds(10));
+            }
         }
     }
 }
