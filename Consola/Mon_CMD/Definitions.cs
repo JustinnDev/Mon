@@ -1,5 +1,11 @@
 ﻿namespace Mon.DataTypes
 {
+    public struct JsonPaths
+    {
+        public const string CommitsPath = @"C:\Users\Mondongo\Documents\Repositorios\Mon\Consola\Mon_CMD\Commits.json";
+        public const string RelativeCommitsPath = @"Commits.json";
+    }
+
     public struct Definitions
     {
         public const string ProgramName = "Mon";

@@ -1,8 +1,8 @@
 ﻿using Mon.Behaviur;
 using Mon.DataTypes;
-using System.Threading;
+using Mon.DataSaveBehaviur;
 
-namespace Mon
+namespace Mon.Main
 {
     class Program
     {
@@ -13,10 +13,10 @@ namespace Mon
 
             var commits = await Github.GetAllComits();
 
-            await Console.Out.WriteLineAsync(commits.Count.ToString());
-
             foreach (var commit in commits)
-                await Console.Out.WriteLineAsync(commit.Sha);
+                Json.commitList.Add(commit.Sha);
+
+            Json.Save();
         }
 
         static async Task Behaviur()
