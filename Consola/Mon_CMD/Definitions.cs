@@ -18,6 +18,7 @@
     {
         public const string RepositoryName = "PruebaMon";
         public const string LocalRepository = @"C:\Users\Mondongo\Documents\Repositorios\PruebaMon";
+        public const string RemoteRepository = @"https://github.com/JustinnDev/PruebaMon";
     }
 
     public struct Contents

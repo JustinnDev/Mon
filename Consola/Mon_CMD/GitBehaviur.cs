@@ -146,7 +146,6 @@ namespace Mon.Behaviur
 
             pullOptions.MergeOptions = new MergeOptions();
             pullOptions.MergeOptions.FailOnConflict = true;
-
             pullOptions.FetchOptions = new FetchOptions();
             pullOptions.FetchOptions.CredentialsProvider = new CredentialsHandler((url, usernameFromUrl, types) => new UsernamePasswordCredentials()
             {
@@ -167,11 +166,17 @@ namespace Mon.Behaviur
                       committer: author);
 
                 currentRepository.Network.Push(
-                    branch: currentRepository.Branches[Github.currentRepository.Name],
-                    pushOptions: pushOptions);
+                branch: currentRepository.Branches[Github.currentRepository.DefaultBranch],
+                pushOptions: pushOptions);
 
-                Console.WriteLine("Push de cambios.");
+                Debug.Log("Push de cambios.", MessageType.ok);
             }
+
+            catch(EmptyCommitException e)
+            {
+                Debug.Log(e.Message , MessageType.warning);
+            }
+
             catch (Exception)
             {
                 Debug.Log("Error al hacer Push de los cambios locales", MessageType.error);
@@ -182,15 +187,25 @@ namespace Mon.Behaviur
         {
             try
             {
-               Commands.Fetch(
-               repository: Git.currentRepository,
-               remote: Github.currentRepository.Url,
-               options: pullOptions.FetchOptions,
-               logMessage: null,
-               refspecs: Array.Empty<string>());
+                Commands.Pull(
+                    repository: currentRepository,
+                    merger: author,
+                    options: pullOptions
+                    );
 
-                Console.WriteLine("Pull de cambios.");
+                Debug.Log("Pull de cambios." , MessageType.ok);
             }
+          
+            catch (InvalidSpecificationException e)
+            {
+                Debug.Log(e.Message , MessageType.error);
+            }
+
+            catch (LibGit2SharpException e)
+            {
+                Debug.Log(e.Message, MessageType.error);
+            }
+
             catch (Exception)
             {
                 Debug.Log("Error al hacer Pull de la rama remota", MessageType.error);
@@ -244,7 +259,10 @@ namespace Mon.Behaviur
                 new DebugObject("Mon.Behaviur.Git.currentRepository" , Git.currentRepository),
                 new DebugObject("Mon.Behaviur.Git.pullOptions" , Git.pullOptions),
                 new DebugObject("Mon.Behaviur.Git.author" , Git.author),
+                new DebugObject("Mon.Behaviur.Git.currentRepository.Branches[Github.currentRepository.DefaultBranch]" , Git.currentRepository.Branches[Github.currentRepository.DefaultBranch])
             ];
+
+            Console.WriteLine("-----------------------------------------------------");
 
             foreach (var obj in listReferences)
             {
@@ -255,7 +273,7 @@ namespace Mon.Behaviur
                     Log($"{obj.Name}", MessageType.ok);
             }
 
-            Console.WriteLine();
+            Console.WriteLine("-----------------------------------------------------");
         }
 
         struct DebugObject

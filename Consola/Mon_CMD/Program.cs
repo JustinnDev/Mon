@@ -9,18 +9,11 @@ namespace Mon
         static async Task Main(string[] args)
         {
             await Github.Start();
-
+          
             while (true)
             {
-                try
-                {
-                    await Behaviur();
-                    await Task.Delay(TimeSpan.FromSeconds(5));
-                }
-                catch (Exception)
-                {
-                    Debug.Log("Error fatal en el Sistema", MessageType.error);  
-                }
+                await Behaviur();
+                await Task.Delay(TimeSpan.FromSeconds(5));
             }
         }
 
@@ -35,14 +28,7 @@ namespace Mon
 
             Git.PullRemoteChanges();
             Git.PushLocalChanges();
-
-            await Console.Out.WriteLineAsync($"Pull/Push");
-        }
-
-
-        static async Task Test()
-        {
-            await Console.Out.WriteLineAsync("Test");
+            await Console.Out.WriteLineAsync();
         }
     }
 }
