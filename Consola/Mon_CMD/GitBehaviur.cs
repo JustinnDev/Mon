@@ -131,6 +131,50 @@ namespace Mon.Behaviur
                 return null;
             }
         }
+
+        public static async Task DeleteCommits()
+        {
+            await Task.CompletedTask;
+        }
+
+        public static async Task DownloadCommitFiles(string sha)
+        {
+            try
+            {
+                var commits = await GetAllComits();
+
+                foreach (var commit in commits)
+                {
+                    try
+                    {
+                        if(commit != null)
+                        {
+                            for (int i = 0; i < commit.Files.Count; i++)
+                            {
+                                await Console.Out.WriteLineAsync(commit.Files[i].Filename);
+                            }
+                        }
+                    }
+                    catch (NullReferenceException)
+                    {
+
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+
+            await Task.CompletedTask;
+        }
+
     }
 
     public static class Git
@@ -221,6 +265,14 @@ namespace Mon.Behaviur
             catch (Exception)
             {
                 Debug.Log("Error al hacer Pull de la rama remota", MessageType.error);
+            }
+        }
+
+        public static void DownloadCommitFiles(string sha)
+        {
+            foreach(var commit in currentRepository.Commits)
+            {
+                Console.WriteLine(commit.Message);
             }
         }
     }

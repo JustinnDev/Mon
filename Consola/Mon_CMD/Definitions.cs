@@ -1,5 +1,10 @@
 ﻿namespace Mon.DataTypes
 {
+    public struct Config
+    {
+        public const int DefaultTimeTask = 60;
+    }
+
     public struct JsonPaths
     {
         public const string CommitsPath = @"C:\Users\Mondongo\Documents\Repositorios\Mon\Consola\Mon_CMD\Commits.json";

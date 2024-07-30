@@ -11,12 +11,17 @@ namespace Mon.Main
             await Github.Start();
             //await Behaviur();
 
-            var commits = await Github.GetAllComits();
+            await Github.DownloadCommitFiles("");
 
-            foreach (var commit in commits)
-                Json.commitList.Add(commit.Sha);
+            //var commits = await Github.GetAllComits();
 
-            Json.Save();
+            //foreach (var commit in commits)
+            //{
+            //    await Console.Out.WriteLineAsync($"{commit.Commit.Message} {commit.Sha}");
+            //    await Console.Out.WriteLineAsync("-------------------------------------");
+            //}
+
+            //Json.Save();
         }
 
         static async Task Behaviur()
@@ -34,7 +39,7 @@ namespace Mon.Main
                 Git.PushLocalChanges();
                 await Console.Out.WriteLineAsync();
 
-                await Task.Delay(TimeSpan.FromSeconds(10));
+                await Task.Delay(TimeSpan.FromSeconds(Config.DefaultTimeTask));
             }
         }
     }

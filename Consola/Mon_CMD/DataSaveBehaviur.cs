@@ -1,37 +1,51 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using Mon.DataTypes;
+using Mon.Behaviur;
 
 namespace Mon.DataSaveBehaviur
 {
     static class Json
     {
-        public static List<string> commitList = new List<string>();
+        public static List<Commit> commitList = new List<Commit>();
 
         public static void Save()
         {
             JObject jsonObject = JObject.Parse(
-                json: File.ReadAllText(JsonPaths.CommitsPath)
+                File.ReadAllText(JsonPaths.CommitsPath)
                 );
 
-            for (int i = 0; i < 0; i++)
-                jsonObject[$"Commit {i}"] = commitList[i];
+            JArray commitsArray = jsonObject["commits"] as JArray ?? new JArray();
+       
+            foreach (var commit in commitList)
+            {
+                JObject commitObject = JObject.FromObject(commit);
+                commitsArray.Add(commitObject);
+            }
 
-            string updatedJson = jsonObject.ToString();
+            jsonObject["commits"] = commitsArray;
 
-            File.WriteAllText(JsonPaths.CommitsPath, updatedJson);
+            File.WriteAllText(JsonPaths.CommitsPath, jsonObject.ToString());
 
-            Console.WriteLine("Archivo JSON modificado exitosamente.");
+            Debug.Log("Archivo JSON modificado exitosamente.", MessageType.ok);
+        }
+
+        public static void AddCommitSha(string Sha)
+        {
+            commitList.Add(
+                new Commit()
+                {
+                    Sha = Sha,
+                    Name = $"Commit {commitList.Count}"
+                }
+                );
         }
     }
 
-    struct ShaCommit
+    struct Commit
     {
-        public string Sha;
-
-        public ShaCommit(string Sha)
-        {
-            this.Sha = Sha;
-        }
+        public string? Name;
+        public string? Sha;
+   
+        public Commit() { }
     }
 }
