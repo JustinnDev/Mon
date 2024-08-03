@@ -11,17 +11,10 @@ namespace Mon.Main
             await Github.Start();
             //await Behaviur();
 
-            await Github.DownloadCommitFiles("");
+            var commits = await Github.GetAllComits();
 
-            //var commits = await Github.GetAllComits();
-
-            //foreach (var commit in commits)
-            //{
-            //    await Console.Out.WriteLineAsync($"{commit.Commit.Message} {commit.Sha}");
-            //    await Console.Out.WriteLineAsync("-------------------------------------");
-            //}
-
-            //Json.Save();
+            foreach (var commit in commits)
+                await Github.DownloadCommitFiles(commit.Sha);
         }
 
         static async Task Behaviur()

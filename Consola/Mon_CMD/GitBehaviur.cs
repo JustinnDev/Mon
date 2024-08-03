@@ -2,6 +2,7 @@
 using LibGit2Sharp;
 using Mon.DataTypes;
 using LibGit2Sharp.Handlers;
+using Mon.DataSaveBehaviur;
 
 namespace Mon.Behaviur
 {
@@ -128,6 +129,23 @@ namespace Mon.Behaviur
             }
             catch (Exception)
             {
+                Debug.Log("No se pudieron obtener todos los Commits", MessageType.warning);
+                return null;
+            }
+        }
+
+        public static async Task<GitHubCommit?> GetCommit(string sha)
+        {
+            try
+            {
+                return await client.Repository.Commit.Get(
+                    repositoryId: currentRepository.Id,
+                    reference: sha
+                    );
+            }
+            catch (Exception)
+            {
+                Debug.Log("No se obtuvo el commit especificado", MessageType.warning);
                 return null;
             }
         }
@@ -139,40 +157,63 @@ namespace Mon.Behaviur
 
         public static async Task DownloadCommitFiles(string sha)
         {
-            try
-            {
-                var commits = await GetAllComits();
+            var commit = await GetCommit(sha);
 
-                foreach (var commit in commits)
+            foreach (var file in commit.Files)
+            {
+                try
                 {
-                    try
-                    {
-                        if(commit != null)
-                        {
-                            for (int i = 0; i < commit.Files.Count; i++)
-                            {
-                                await Console.Out.WriteLineAsync(commit.Files[i].Filename);
-                            }
-                        }
-                    }
-                    catch (NullReferenceException)
-                    {
+                    var bytes = await client.Repository.Content.GetRawContentByRef(
+                        owner: user.Login,
+                        name: currentRepository.Name,
+                        path: file.Filename,
+                        reference: commit.Sha
+                        );
 
-                    }
-                    catch (Exception)
-                    {
+                    string commitFolderName =   commit.Commit.Message
+                        .Replace("\\", " ")
+                        .Replace("/", " ")
+                        .Replace(":", " ")
+                        .Replace("*", " ")
+                        .Replace("?", " ")
+                        .Replace("\"", " ")
+                        .Replace("<", " ")
+                        .Replace(">", " ")
+                        .Replace("|", " ")
+                        .Replace("\"", " ");
 
-                    }
+                    await Console.Out.WriteLineAsync(commitFolderName);
+
+                    string commitFolder = Path.Combine(DefaultPaths.DownloadCommitsPaths, commitFolderName);
+                    Directory.CreateDirectory(commitFolder);
+
+                    string filePath = Path.Combine(commitFolder, file.Filename);
+
+                    File.WriteAllBytes(filePath, bytes);
+
+                 
+
+                    Debug.Log($"Archivo descargado: {filePath}" , MessageType.ok);
                 }
+
+                catch (Octokit.NotFoundException e)
+                {
+                    Debug.Log($"{e.Message} {file.Filename}", MessageType.warning);
+                }
+
+                catch (NullReferenceException e)
+                {
+                    Debug.Log($"{e.Message} del commit {commit.Sha}", MessageType.warning);
+                }
+
+                catch
+                {
+                    Debug.Log($"Hubo un error en la descarga de los archivos", MessageType.error);
+                }
+
             }
-            catch (Exception)
-            {
+            await Console.Out.WriteLineAsync("------------------------------------------------------");
 
-                throw;
-            }
-
-
-            await Task.CompletedTask;
         }
 
     }

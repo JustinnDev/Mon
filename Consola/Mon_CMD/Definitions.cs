@@ -11,6 +11,11 @@
         public const string RelativeCommitsPath = @"Commits.json";
     }
 
+    public struct DefaultPaths
+    {
+        public const string DownloadCommitsPaths = "C:\\Users\\Mondongo\\Documents\\Repositorios\\Mon\\Consola\\Mon_CMD\\DownloadsCommits\\";
+    }
+
     public struct Definitions
     {
         public const string ProgramName = "Mon";
