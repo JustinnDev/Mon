@@ -3,6 +3,7 @@
     public struct Config
     {
         public const int DefaultTimeTask = 60;
+        public const int DefaultInputTimeTask = 4;
     }
 
     public struct JsonPaths
@@ -14,6 +15,7 @@
     public struct DefaultPaths
     {
         public const string DownloadCommitsPaths = "C:\\Users\\Mondongo\\Documents\\Repositorios\\Mon\\Consola\\Mon_CMD\\DownloadsCommits\\";
+        public const string DownloadCommitsRelativePath = "DownloadsCommits\\";
     }
 
     public struct Definitions
@@ -26,7 +28,7 @@
     public struct Login
     {
         public const string UserName = "JustinnDev";
-        public const string Credentials = "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";
+        public const string Credentials = "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";
         public const string Mail = "justinalmaodev@gmail.com";
     }
 
@@ -44,8 +46,8 @@
 
     public enum MessageType
     {
-        ok,
-        warning,
-        error
+        Ok,
+        Warning,
+        Error
     }
 }

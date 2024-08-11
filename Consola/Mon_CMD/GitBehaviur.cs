@@ -2,33 +2,41 @@
 using LibGit2Sharp;
 using Mon.DataTypes;
 using LibGit2Sharp.Handlers;
-using Mon.DataSaveBehaviur;
+using Mon.Tools;
 
 namespace Mon.Behaviur
 {
-    #region Behaviur  
+    #region Behaviur
+
+    /// <summary>
+    /// Provides methods to interact with GitHub API for repository management and file operations.
+    /// </summary>
+    /// <remarks>
+    /// This class encapsulates the functionality to interact with GitHub repositories using the Octokit library.
+    /// It supports operations such as fetching user information, searching for repositories, updating and creating files,
+    /// handling commits, and downloading commit files.
+    /// </remarks>
     public static class Github
     {
-        //Client
+        // Client Configuration
         public static ProductHeaderValue header = new(Definitions.ProgramName);
         public static GitHubClient client = new(header);
         public static User user = new User();
 
-        //Searching
+        // Search Configuration
         public static SearchRepositoriesRequest repositotyRequest = new(Repositories.RepositoryName);
         public static SearchRepositoryResult repositoryResult = new();
 
-        //Repositories
+        // Repository Data
         public static IReadOnlyList<Octokit.Repository> repositories;
         public static Octokit.Repository currentRepository;
 
-        //API Information
+        // API Information
         public static ApiInfo apiInfo;
 
         static Github()
         {
-            //Ingresa la configuracion de la API 
-
+            // Initializes GitHub client configuration with credentials and fetches initial data.
             client.Credentials = new Octokit.Credentials(Login.Credentials);
             apiInfo = client.GetLastApiInfo();
             repositories = client.Repository.GetAllForCurrent().Result;
@@ -37,6 +45,9 @@ namespace Mon.Behaviur
             UpdateRepositories();
         }
 
+        /// <summary>
+        /// Starts the GitHub interaction by fetching user data, repository search results, and API information.
+        /// </summary>
         public static async Task Start()
         {
             user = await client.User.Get(Login.UserName);
@@ -46,9 +57,12 @@ namespace Mon.Behaviur
             Debug.CheckingReference();
         }
 
+        /// <summary>
+        /// Updates the list of repositories and sets the current repository based on the configured repository name.
+        /// </summary>
         public static void UpdateRepositories()
         {
-            //Actualiza los datos de los  repositorios remotos
+            // Refreshes the list of repositories and identifies the current repository.
             repositories = client.Repository.GetAllForCurrent().Result;
 
             foreach (var rep in repositories)
@@ -61,24 +75,34 @@ namespace Mon.Behaviur
             }
         }
 
-        public static async Task<IReadOnlyList<RepositoryContent>?> GetFileOnRepository(string filenName)
+        /// <summary>
+        /// Retrieves file content from the current repository based on the specified file name.
+        /// </summary>
+        /// <param name="fileName">The name of the file to retrieve.</param>
+        /// <returns>A list of file contents if the file is found; otherwise, null.</returns>
+        public static async Task<IReadOnlyList<RepositoryContent>?> GetFileOnRepository(string fileName)
         {
             try
             {
                 return await client.Repository.Content.GetAllContentsByRef(
                     owner: user.Login,
                     name: currentRepository.Name,
-                    path: filenName,
+                    path: fileName,
                     reference: currentRepository.DefaultBranch
-                    );
+                );
             }
             catch (Octokit.NotFoundException e)
             {
-                Debug.Log(e.Message, MessageType.warning);
+                Debug.Log(e.Message, MessageType.Warning);
                 return null;
             }
         }
 
+        /// <summary>
+        /// Updates a file in the current repository with the specified content.
+        /// </summary>
+        /// <param name="fileName">The name of the file to update.</param>
+        /// <param name="content">The new content for the file.</param>
         public static async Task UpdateFileOnRepository(string fileName, string content)
         {
             try
@@ -87,41 +111,50 @@ namespace Mon.Behaviur
                     owner: user.Login,
                     name: currentRepository.Name,
                     reference: fileName
-                    );
+                );
 
                 await client.Repository.Content.UpdateFile(
                     owner: user.Login,
                     name: currentRepository.Name,
                     path: fileName,
-                    request: new UpdateFileRequest($"Update {fileName}" , content , sha)
-                    );
+                    request: new UpdateFileRequest($"Update {fileName}", content, sha)
+                );
             }
             catch (Octokit.NotFoundException e)
             {
-                Debug.Log(e.Message , MessageType.warning);
+                Debug.Log(e.Message, MessageType.Warning);
             }
         }
 
-        public static async Task CreateFileOnRepository(string filenName, string content)
+        /// <summary>
+        /// Creates a new file in the current repository with the specified content.
+        /// </summary>
+        /// <param name="fileName">The name of the file to create.</param>
+        /// <param name="content">The content of the new file.</param>
+        public static async Task CreateFileOnRepository(string fileName, string content)
         {
             try
             {
                 var newFile = await client.Repository.Content.CreateFile(
-                owner: user.Login,
-                name: currentRepository.Name,
-                path: filenName,
-                request: new CreateFileRequest($"Create {filenName}", content)
+                    owner: user.Login,
+                    name: currentRepository.Name,
+                    path: fileName,
+                    request: new CreateFileRequest($"Create {fileName}", content)
                 );
 
-                Console.WriteLine($"Creado {filenName}");
+                Console.WriteLine($"Created {fileName}");
             }
             catch (Exception)
             {
-                Debug.Log($"No se creo {filenName}", MessageType.warning);
+                Debug.Log($"Failed to create {fileName}", MessageType.Warning);
             }
         }
 
-        public static async Task<IReadOnlyList<GitHubCommit>?> GetAllComits()
+        /// <summary>
+        /// Retrieves all commits from the current repository.
+        /// </summary>
+        /// <returns>A list of commits if successful; otherwise, null.</returns>
+        public static async Task<IReadOnlyList<GitHubCommit>?> GetAllCommits()
         {
             try
             {
@@ -129,11 +162,16 @@ namespace Mon.Behaviur
             }
             catch (Exception)
             {
-                Debug.Log("No se pudieron obtener todos los Commits", MessageType.warning);
+                Debug.Log("Failed to retrieve all commits", MessageType.Warning);
                 return null;
             }
         }
 
+        /// <summary>
+        /// Retrieves a specific commit by its SHA from the current repository.
+        /// </summary>
+        /// <param name="sha">The SHA of the commit to retrieve.</param>
+        /// <returns>The commit if found; otherwise, null.</returns>
         public static async Task<GitHubCommit?> GetCommit(string sha)
         {
             try
@@ -141,96 +179,114 @@ namespace Mon.Behaviur
                 return await client.Repository.Commit.Get(
                     repositoryId: currentRepository.Id,
                     reference: sha
-                    );
+                );
             }
             catch (Exception)
             {
-                Debug.Log("No se obtuvo el commit especificado", MessageType.warning);
+                Debug.Log("Failed to retrieve the specified commit", MessageType.Warning);
                 return null;
             }
         }
 
+        /// <summary>
+        /// Deletes commits from the current repository. (Functionality not yet implemented)
+        /// </summary>
         public static async Task DeleteCommits()
         {
             await Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Downloads files from a commit based on its SHA and saves them to the local file system.
+        /// </summary>
+        /// <param name="sha">The SHA of the commit from which to download files.</param>
         public static async Task DownloadCommitFiles(string sha)
         {
             var commit = await GetCommit(sha);
+
+            if (commit == null)
+                return;
 
             foreach (var file in commit.Files)
             {
                 try
                 {
-                    var bytes = await client.Repository.Content.GetRawContentByRef(
+                    // Download the file content as bytes
+                    byte[] bytes = await client.Repository.Content.GetRawContentByRef(
                         owner: user.Login,
                         name: currentRepository.Name,
                         path: file.Filename,
                         reference: commit.Sha
-                        );
+                    );
 
-                    string commitFolderName =   commit.Commit.Message
-                        .Replace("\\", " ")
-                        .Replace("/", " ")
-                        .Replace(":", " ")
-                        .Replace("*", " ")
-                        .Replace("?", " ")
-                        .Replace("\"", " ")
-                        .Replace("<", " ")
-                        .Replace(">", " ")
-                        .Replace("|", " ")
-                        .Replace("\"", " ");
+                    // Create a valid folder path for Windows
+                    string commitFolders = Path.Combine(
+                        DefaultPaths.DownloadCommitsPaths,
+                        Path.Combine(
+                            Strings.StringToCorrectPathName(commit.Commit.Message),
+                            Strings.FilePathToFolders(file.Filename)
+                        )
+                    );
 
-                    await Console.Out.WriteLineAsync(commitFolderName);
+                    // Add the file name to the path
+                    string filePath = Path.Combine(
+                        commitFolders,
+                        Strings.FilePathToFileName(file.Filename)
+                    );
 
-                    string commitFolder = Path.Combine(DefaultPaths.DownloadCommitsPaths, commitFolderName);
-                    Directory.CreateDirectory(commitFolder);
-
-                    string filePath = Path.Combine(commitFolder, file.Filename);
+                    Directory.CreateDirectory(commitFolders);
 
                     File.WriteAllBytes(filePath, bytes);
 
-                 
-
-                    Debug.Log($"Archivo descargado: {filePath}" , MessageType.ok);
+                    Debug.Log($"File downloaded: {filePath}", MessageType.Ok);
                 }
-
                 catch (Octokit.NotFoundException e)
                 {
-                    Debug.Log($"{e.Message} {file.Filename}", MessageType.warning);
+                    Debug.Log($"{e.Message} {file.Filename} {commit.Sha}", MessageType.Warning);
                 }
-
                 catch (NullReferenceException e)
                 {
-                    Debug.Log($"{e.Message} del commit {commit.Sha}", MessageType.warning);
+                    Debug.Log($"{e.Message} from commit {commit.Sha}", MessageType.Warning);
                 }
-
-                catch
+                catch (DirectoryNotFoundException e)
                 {
-                    Debug.Log($"Hubo un error en la descarga de los archivos", MessageType.error);
+                    Debug.Log($"DirectoryNotFoundException {e.Message}", MessageType.Warning);
                 }
-
+                catch (IOException e)
+                {
+                    Debug.Log($"IOException {e.Message}", MessageType.Warning);
+                }
             }
-            await Console.Out.WriteLineAsync("------------------------------------------------------");
-
         }
-
     }
 
+
+    /// <summary>
+    /// Provides methods and options for interacting with Git repositories using the LibGit2Sharp library.
+    /// </summary>
+    /// <remarks>
+    /// This class handles Git operations such as pushing local changes to a remote repository and pulling updates from a remote repository.
+    /// It configures necessary options for both push and pull operations, including credentials and merge options.
+    /// 
+    /// The static constructor sets up the configuration for push and pull options, ensuring that credentials are provided and merge conflicts are handled properly.
+    /// 
+    /// Methods:
+    /// - <see cref="PushLocalChanges"/>: Stages all changes, commits them with a timestamped message, and pushes them to the remote repository.
+    /// - <see cref="PullRemoteChanges"/>: Pulls updates from the remote repository and merges them into the local repository.
+    /// </remarks>
     public static class Git
     {
-        //Options
+        // Options for Git operations
         public static PushOptions pushOptions;
         public static PullOptions pullOptions = new();
 
-        //Credentials/Data
+        // Repository and author information
         public static LibGit2Sharp.Repository currentRepository = new(Repositories.LocalRepository);
         public static LibGit2Sharp.Signature author = new(Github.user.Login, Login.Mail, DateTimeOffset.Now);
 
         static Git()
         {
-            //Configuracion de las opciones de Push
+            // Configure push options with credentials
             pushOptions = new PushOptions
             {
                 CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
@@ -240,7 +296,7 @@ namespace Mon.Behaviur
                 }
             };
 
-            //Configuracion de las opciones de Pull
+            // Configure pull options with merge and fetch options
             pullOptions.MergeOptions = new MergeOptions();
             pullOptions.MergeOptions.FailOnConflict = true;
             pullOptions.FetchOptions = new FetchOptions();
@@ -251,72 +307,69 @@ namespace Mon.Behaviur
             });
         }
 
+        /// <summary>
+        /// Stages all changes, commits them with a timestamped message, and pushes them to the remote repository.
+        /// </summary>
         public static void PushLocalChanges()
         {
             try
             {
+                // Stage all changes in the repository
                 Commands.Stage(currentRepository, "*");
 
+                // Commit the staged changes with a timestamped message
                 currentRepository.Commit(
-                      message: $"Cambio {DateTimeOffset.Now}",
-                      author: author,
-                      committer: author);
+                    message: DateTimeOffset.Now.ToString(),
+                    author: author,
+                    committer: author);
 
+                // Push the commit to the remote repository
                 currentRepository.Network.Push(
-                branch: currentRepository.Branches[Github.currentRepository.DefaultBranch],
-                pushOptions: pushOptions);
+                    branch: currentRepository.Branches[Github.currentRepository.DefaultBranch],
+                    pushOptions: pushOptions);
 
-                Debug.Log("Push de cambios.", MessageType.ok);
+                Debug.Log("Push changes", MessageType.Ok);
             }
-
-            catch(EmptyCommitException e)
+            catch (EmptyCommitException e)
             {
-                Debug.Log(e.Message , MessageType.warning);
+                Debug.Log(e.Message, MessageType.Warning);
             }
-
             catch (Exception)
             {
-                Debug.Log("Error al hacer Push de los cambios locales", MessageType.error);
+                Debug.Log("Fail to push local changes.", MessageType.Error);
             }
         }
 
+        /// <summary>
+        /// Pulls updates from the remote repository and merges them into the local repository.
+        /// </summary>
         public static void PullRemoteChanges()
         {
             try
             {
+                // Pull changes from the remote repository
                 Commands.Pull(
                     repository: currentRepository,
                     merger: author,
-                    options: pullOptions
-                    );
+                    options: pullOptions);
 
-                Debug.Log("Pull de cambios." , MessageType.ok);
+                Debug.Log("Pull Changes.", MessageType.Ok);
             }
-          
             catch (InvalidSpecificationException e)
             {
-                Debug.Log(e.Message , MessageType.error);
+                Debug.Log(e.Message, MessageType.Error);
             }
-
             catch (LibGit2SharpException e)
             {
-                Debug.Log(e.Message, MessageType.error);
+                Debug.Log(e.Message, MessageType.Error);
             }
-
             catch (Exception)
             {
-                Debug.Log("Error al hacer Pull de la rama remota", MessageType.error);
-            }
-        }
-
-        public static void DownloadCommitFiles(string sha)
-        {
-            foreach(var commit in currentRepository.Commits)
-            {
-                Console.WriteLine(commit.Message);
+                Debug.Log("Fail to pull remote changes in local repository", MessageType.Error);
             }
         }
     }
+
     #endregion
 
     #region Debug Behaviur
@@ -328,17 +381,17 @@ namespace Mon.Behaviur
 
             switch (type)
             {
-                case MessageType.ok:
+                case MessageType.Ok:
                     msgType = "OK:";
                     Console.ForegroundColor = ConsoleColor.Green;
                     break;
 
-                case MessageType.warning:
+                case MessageType.Warning:
                     msgType = "WARNING:";
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     break;
 
-                case MessageType.error:
+                case MessageType.Error:
                     msgType = "ERROR:";
                     Console.ForegroundColor = ConsoleColor.Red;
                     break;
@@ -372,10 +425,10 @@ namespace Mon.Behaviur
             foreach (var obj in listReferences)
             {
                 if (obj.Value == null)
-                    Log($"No se cargo {obj.Name}", MessageType.error);
+                    Log($"Its not load {obj.Name}", MessageType.Error);
 
                 else
-                    Log($"{obj.Name}", MessageType.ok);
+                    Log($"{obj.Name}", MessageType.Ok);
             }
 
             Console.WriteLine("-----------------------------------------------------");

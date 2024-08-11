@@ -26,7 +26,7 @@ namespace Mon.DataSaveBehaviur
 
             File.WriteAllText(JsonPaths.CommitsPath, jsonObject.ToString());
 
-            Debug.Log("Archivo JSON modificado exitosamente.", MessageType.ok);
+            Debug.Log("Archivo JSON modificado exitosamente.", MessageType.Ok);
         }
 
         public static void AddCommitSha(string Sha)
