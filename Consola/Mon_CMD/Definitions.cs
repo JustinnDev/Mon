@@ -28,7 +28,7 @@
     public struct Login
     {
         public const string UserName = "JustinnDev";
-        public const string Credentials = "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";
+        public const string Credentials = "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";
         public const string Mail = "justinalmaodev@gmail.com";
     }
 

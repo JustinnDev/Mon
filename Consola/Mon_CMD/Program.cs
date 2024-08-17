@@ -14,7 +14,7 @@ namespace Mon.Main
             if (await Github.GetFileOnRepository(Definitions.gitignore) == null)
                 await Github.CreateFileOnRepository(Definitions.gitignore, Contents.GitIgnore);
 
-            await Update();
+            //await Update();
         }
 
         static async Task Update()

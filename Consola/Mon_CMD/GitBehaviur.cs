@@ -3,6 +3,7 @@ using LibGit2Sharp;
 using Mon.DataTypes;
 using LibGit2Sharp.Handlers;
 using Mon.Tools;
+using System.Reflection;
 
 namespace Mon.Behaviur
 {
@@ -84,6 +85,8 @@ namespace Mon.Behaviur
         {
             try
             {
+                await Console.Out.WriteLineAsync($"{user.Login}, {currentRepository.Name} , {fileName} , {currentRepository.DefaultBranch}");
+
                 return await client.Repository.Content.GetAllContentsByRef(
                     owner: user.Login,
                     name: currentRepository.Name,
@@ -91,6 +94,13 @@ namespace Mon.Behaviur
                     reference: currentRepository.DefaultBranch
                 );
             }
+
+            catch (ArgumentNullException e)
+            {
+                Debug.Log(e.Message , MessageType.Error);
+                return null;
+            }
+
             catch (Octokit.NotFoundException e)
             {
                 Debug.Log(e.Message, MessageType.Warning);
@@ -403,32 +413,24 @@ namespace Mon.Behaviur
 
         public static void CheckingReference()
         {
-            List<DebugObject> listReferences =
+            List<DebugObject> debuggingObjects =
             [
-                new DebugObject("Mon.Behaviur.Github.header", Github.header),
-                new DebugObject("Mon.Behaviur.Github.client", Github.client),
-                new DebugObject("Mon.Behaviur.Github.user", Github.user),
-                new DebugObject("Mon.Behaviur.Github.repositotyRequest", Github.repositotyRequest),
-                new DebugObject("Mon.Behaviur.Github.repositoryResult", Github.repositoryResult),
-                new DebugObject("Mon.Behaviur.Github.apiInfo" , Github.apiInfo),
-                new DebugObject("Mon.Behaviur.Github.repositories" , Github.repositories),
-                new DebugObject("Mon.Behaviur.Github.currentRepository" , Github.currentRepository),
-                new DebugObject("Mon.Behaviur.Git.pushOptions" , Git.pushOptions),
-                new DebugObject("Mon.Behaviur.Git.currentRepository" , Git.currentRepository),
-                new DebugObject("Mon.Behaviur.Git.pullOptions" , Git.pullOptions),
-                new DebugObject("Mon.Behaviur.Git.author" , Git.author),
-                new DebugObject("Mon.Behaviur.Git.currentRepository.Branches[Github.currentRepository.DefaultBranch]" , Git.currentRepository.Branches[Github.currentRepository.DefaultBranch])
-            ];
+                new DebugObject(typeof(Github)),
+                new DebugObject(typeof(Git)),
+           ];
 
             Console.WriteLine("-----------------------------------------------------");
 
-            foreach (var obj in listReferences)
+            foreach (var debugObject in debuggingObjects)
             {
-                if (obj.Value == null)
-                    Log($"Its not load {obj.Name}", MessageType.Error);
+                foreach (var info in debugObject.fieldsInfo) 
+                {
+                    if (info.GetValue(null) == null)
+                        Log($"Null Reference {debugObject.type.Name}.{info.Name}", MessageType.Error);
 
-                else
-                    Log($"{obj.Name}", MessageType.Ok);
+                    else
+                        Log($"{debugObject.type.Name}.{info.Name}", MessageType.Ok);
+                }
             }
 
             Console.WriteLine("-----------------------------------------------------");
@@ -436,13 +438,13 @@ namespace Mon.Behaviur
 
         struct DebugObject
         {
-            public string Name;
-            public object Value;
+            public FieldInfo[] fieldsInfo;
+            public Type type;
 
-            public DebugObject(string name, object value)
+            public DebugObject(Type type)
             {
-                Name = name;
-                Value = value;
+                this.type = type;
+                fieldsInfo = type.GetFields();
             }
         }
     }

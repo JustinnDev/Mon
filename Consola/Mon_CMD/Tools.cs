@@ -94,6 +94,6 @@ namespace Mon.Tools
         /// This method splits the provided file path into its components based on the '/' symbol
         /// and returns the last component, which is assumed to be the file name.
         /// </remarks>
-        public static string FilePathToFileName(string path) => path.Split('/').ToList().Last();
+        public static string FilePathToFileName(string path , char pathSymbol = '/') => path.Split(pathSymbol).ToList().Last();
     }
 }
