@@ -20,28 +20,18 @@ namespace Mon.Behaviur
     public static class Github
     {
         // Client Configuration
-        public static ProductHeaderValue header = new(Definitions.ProgramName);
-        public static GitHubClient client = new(header);
-        public static User user = new User();
-
-        // Search Configuration
-        public static SearchRepositoriesRequest repositotyRequest = new(Repositories.RepositoryName);
-        public static SearchRepositoryResult repositoryResult = new();
-
+        public static GitHubClient client = new(new ProductHeaderValue(Definitions.ProgramName));
+        public static User user = new ();
+   
         // Repository Data
-        public static IReadOnlyList<Octokit.Repository> repositories;
         public static Octokit.Repository currentRepository;
-
-        // API Information
-        public static ApiInfo apiInfo;
 
         static Github()
         {
             // Initializes GitHub client configuration with credentials and fetches initial data.
             client.Credentials = new Octokit.Credentials(Login.Credentials);
-            apiInfo = client.GetLastApiInfo();
-            repositories = client.Repository.GetAllForCurrent().Result;
             currentRepository ??= new();
+            
 
             UpdateRepositories();
         }
@@ -52,10 +42,13 @@ namespace Mon.Behaviur
         public static async Task Start()
         {
             user = await client.User.Get(Login.UserName);
-            repositoryResult = await client.Search.SearchRepo(repositotyRequest);
-            apiInfo = client.GetLastApiInfo();
 
-            Debug.CheckingReference();
+            UpdateRepositories();
+
+            Debug.CheckingReferences(typeof(Github));
+            Debug.CheckingReferences(typeof(Git));
+            Debug.CheckingReferences(typeof(Octokit.Repository), true, currentRepository);
+            Debug.CheckingReferences(typeof(GitHubClient), true, client);
         }
 
         /// <summary>
@@ -64,7 +57,7 @@ namespace Mon.Behaviur
         public static void UpdateRepositories()
         {
             // Refreshes the list of repositories and identifies the current repository.
-            repositories = client.Repository.GetAllForCurrent().Result;
+            var repositories = client.Repository.GetAllForCurrent().Result;
 
             foreach (var rep in repositories)
             {
@@ -85,8 +78,6 @@ namespace Mon.Behaviur
         {
             try
             {
-                await Console.Out.WriteLineAsync($"{user.Login}, {currentRepository.Name} , {fileName} , {currentRepository.DefaultBranch}");
-
                 return await client.Repository.Content.GetAllContentsByRef(
                     owner: user.Login,
                     name: currentRepository.Name,
@@ -97,7 +88,7 @@ namespace Mon.Behaviur
 
             catch (ArgumentNullException e)
             {
-                Debug.Log(e.Message , MessageType.Error);
+                Debug.Log(e.Message , MessageType.Error);   
                 return null;
             }
 
@@ -411,41 +402,22 @@ namespace Mon.Behaviur
             Console.ForegroundColor = ConsoleColor.White;
         }
 
-        public static void CheckingReference()
+        public static void CheckingReferences(Type type, bool getAllData = false , object? instance = null)
         {
-            List<DebugObject> debuggingObjects =
-            [
-                new DebugObject(typeof(Github)),
-                new DebugObject(typeof(Git)),
-           ];
+            Console.WriteLine(type.Name);
 
-            Console.WriteLine("-----------------------------------------------------");
-
-            foreach (var debugObject in debuggingObjects)
+            FieldInfo[] fields = getAllData?  type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) : type.GetFields();
+            
+            foreach (var info in fields)
             {
-                foreach (var info in debugObject.fieldsInfo) 
-                {
-                    if (info.GetValue(null) == null)
-                        Log($"Null Reference {debugObject.type.Name}.{info.Name}", MessageType.Error);
+                if (info.GetValue(instance) == null)
+                    Log($"Null Reference {type.Name}.{info.Name}", MessageType.Error);
 
-                    else
-                        Log($"{debugObject.type.Name}.{info.Name}", MessageType.Ok);
-                }
+                else
+                    Log($"{type.Name}.{info.Name}", MessageType.Ok);
             }
 
-            Console.WriteLine("-----------------------------------------------------");
-        }
-
-        struct DebugObject
-        {
-            public FieldInfo[] fieldsInfo;
-            public Type type;
-
-            public DebugObject(Type type)
-            {
-                this.type = type;
-                fieldsInfo = type.GetFields();
-            }
+            Console.WriteLine();
         }
     }
     #endregion
